@@ -1,6 +1,35 @@
 from transformers import AutoTokenizer, AutoModelForCausalLM, TextStreamer
 
 
+def ajustar_contexto(texto, max_longitud=10000, secuencia="### Instruction"):
+    # Comprobar si la longitud del texto es mayor que el máximo permitido
+    if len(texto) > max_longitud:
+        indice_secuencia = 0
+
+        while True:
+            # Buscar la secuencia de ajuste
+            indice_secuencia = texto.find(secuencia, indice_secuencia + 1)
+
+            # Si la secuencia no se encuentra o el texto restante es menor que la longitud máxima
+            if indice_secuencia == -1 or len(texto) - indice_secuencia <= max_longitud:
+                break
+
+        # Si encontramos una secuencia válida
+        if indice_secuencia != -1:
+            return texto[indice_secuencia:]
+        else:
+            # Si no se encuentra ninguna secuencia adecuada, tomar los últimos max_longitud caracteres
+            return texto[-max_longitud:]
+    else:
+        return texto
+
+# Ejemplo de uso de la función
+# texto_engordado = "Texto previo. ### Instruction Primer corte. Texto intermedio. ### Instruction Segundo corte. Texto final que sobrepasa los 30 caracteres."
+# texto_ajustado = ajustar_contexto(texto_engordado, 30)
+# print(texto_ajustado)
+
+    
+
 def generate_long_chat(historico, input_text, max_additional_tokens=2000, stop=["<|EOT|>"]):
 
     # if stop is None:
@@ -10,6 +39,7 @@ def generate_long_chat(historico, input_text, max_additional_tokens=2000, stop=[
     streamer = TextStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True) # para streamear el output pero sin repetir el prompt ni el contexto anterior. 
 
     final_prompt = historico + "\n" + prompt
+    longitud_prompt_tokens = len(tokenizer.encode(final_prompt))
  
     inputs = tokenizer(final_prompt, return_tensors="pt", add_special_tokens=False)
 
@@ -24,7 +54,9 @@ def generate_long_chat(historico, input_text, max_additional_tokens=2000, stop=[
                              do_sample=True)
 
     # Decodificar el tensor de salida a una cadena de texto
-    decoded_output = tokenizer.decode(outputs[0], skip_special_tokens=True)    
+    inicio_generado = longitud_prompt_tokens - 1
+    decoded_output = tokenizer.decode(outputs[0][inicio_generado:], skip_special_tokens=True)    
+    # decoded_output = tokenizer.decode(outputs[0], skip_special_tokens=True)    
     
     text = final_prompt + decoded_output + "<|EOT|>"
     return text
@@ -55,11 +87,15 @@ while True:
     if input_text == "/historico": 
         print(historico)
         continue
+    if input_text == "/len": 
+        print("longitud del contexto en caracteres: ", len(historico))
+        continue
     if input_text == "/clear":
         historico = ""
         continue
     # generate response
     historico = generate_long_chat(historico, input_text=input_text, max_additional_tokens=2048)
+    historico = ajustar_contexto(historico)
     # print response
     # print(salida)
     print(f"\n################################################\n")
