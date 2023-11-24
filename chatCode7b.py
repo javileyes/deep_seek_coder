@@ -1,7 +1,7 @@
 from transformers import AutoTokenizer, AutoModelForCausalLM, TextStreamer
 
 
-def ajustar_contexto(texto, max_longitud=10000, secuencia="### Instruction"):
+def ajustar_contexto(texto, max_longitud=8000, secuencia="### Instruction"):
     # Comprobar si la longitud del texto es mayor que el máximo permitido
     if len(texto) > max_longitud:
         indice_secuencia = 0
