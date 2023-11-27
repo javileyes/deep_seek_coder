@@ -28,9 +28,26 @@ def ajustar_contexto(texto, max_longitud=8000, secuencia="### Instruction"):
 # texto_ajustado = ajustar_contexto(texto_engordado, 30)
 # print(texto_ajustado)
 
+
+def eliminar_ultima_respuesta(texto, secuencia="### Instruction"):
+    # Buscar la secuencia de ajuste
+    indice_secuencia = texto.rfind(secuencia)
+
+    # Si la secuencia no se encuentra
+    if indice_secuencia == -1:
+        return texto
+    else:
+        return texto[:indice_secuencia]
     
 
-def generate_long_chat(historico, input_text, max_additional_tokens=2000, stop=["<|EOT|>"]):
+def eliminar_ultimas_respuestas(texto, n=1, secuencia="### Instruction"):
+    for i in range(n):
+        texto = eliminar_ultima_respuesta(texto, secuencia)
+    return texto
+
+
+
+def generate_long_chat(historico, input_text, max_additional_tokens=2000):
 
     # if stop is None:
     #     stop = [eos_token_id]
@@ -90,8 +107,29 @@ while True:
     if input_text == "/len": 
         print("longitud del contexto en caracteres: ", len(historico))
         continue
+    if input_text.startswith("/del"):
+        partes = input_text.split()
+        if len(partes) == 2 and partes[1].isdigit():
+            try:
+                n = int(partes[1])
+            except ValueError:
+                n = 1
+        else:
+            n = 1  # Por defecto, eliminar una respuesta
+
+        historico = eliminar_ultimas_respuestas(historico, n)
+        continue
     if input_text == "/clear":
         historico = ""
+        continue
+    if input_text == "/help":
+        print("""
+        /exit: salir
+        /historico: mostrar el historico
+        /len: mostrar la longitud del historico
+        /del [n]: eliminar las últimas n respuestas
+        /clear: borrar el historico
+        """)
         continue
     # generate response
     historico = generate_long_chat(historico, input_text=input_text, max_additional_tokens=2048)
