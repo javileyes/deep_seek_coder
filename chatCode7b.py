@@ -23,10 +23,7 @@ def ajustar_contexto(texto, max_longitud=8000, secuencia="### Instruction"):
     else:
         return texto
 
-# Ejemplo de uso de la función
-# texto_engordado = "Texto previo. ### Instruction Primer corte. Texto intermedio. ### Instruction Segundo corte. Texto final que sobrepasa los 30 caracteres."
-# texto_ajustado = ajustar_contexto(texto_engordado, 30)
-# print(texto_ajustado)
+
 
 
 def eliminar_ultima_respuesta(texto, secuencia="### Instruction"):

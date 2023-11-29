@@ -236,7 +236,7 @@ while True:
         """)
         continue 
     if input_text == "/clear":
-        historico = ""
+        historico = system_prompt
         continue
     # generate response
     historico = generate_long_chat(historico, input_text=input_text, max_additional_tokens=2048)
